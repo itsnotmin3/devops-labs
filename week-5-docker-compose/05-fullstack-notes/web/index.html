@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notes · Compose full-stack demo</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; background: #f8fafc; color: #0f172a; display: grid; place-items: start center; min-height: 100vh; }
+      .app { width: min(560px, 92vw); margin-top: 8vh; }
+      h1 { color: #2563eb; }
+      form { display: flex; gap: 8px; margin: 16px 0; }
+      input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 15px; }
+      button { padding: 12px 18px; border: 0; border-radius: 10px; background: #2563eb; color: #fff; font-size: 15px; cursor: pointer; }
+      ul { list-style: none; padding: 0; }
+      li { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; }
+      small { color: #94a3b8; }
+      .empty { color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <h1>📝 Notes</h1>
+      <p><small>web (nginx) → api (Node) → db (MongoDB), all via Docker Compose</small></p>
+      <form id="f">
+        <input id="t" placeholder="Write a note…" autocomplete="off" />
+        <button>Add</button>
+      </form>
+      <ul id="list"><li class="empty">loading…</li></ul>
+    </div>
+    <script>
+      const list = document.getElementById('list')
+      async function load() {
+        const r = await fetch('/api/notes')
+        const notes = await r.json()
+        list.innerHTML = notes.length
+          ? notes.map((n) => `<li>${escapeHtml(n.text)}<br><small>${n.at || ''}</small></li>`).join('')
+          : '<li class="empty">No notes yet — add one above.</li>'
+      }
+      function escapeHtml(s) {
+        return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+      }
+      document.getElementById('f').addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const input = document.getElementById('t')
+        const text = input.value.trim()
+        if (!text) return
+        await fetch('/api/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+        input.value = ''
+        load()
+      })
+      load()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multi-stage build demo</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; background: #eff6ff; }
+      .card { text-align: center; padding: 44px 56px; background: #fff; border: 3px solid #2563eb; border-radius: 20px; box-shadow: 0 16px 40px #2563eb22; }
+      h1 { color: #1d4ed8; margin: 0.1em 0; }
+      p { color: #475569; }
+      code { background: #f1f5f9; padding: 2px 7px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>⚡ Multi-stage build</h1>
+      <p>This page was <strong>built</strong> by Node in stage 1,<br />then served by <strong>nginx</strong> in a tiny final image.</p>
+      <p>built at: <code>{{BUILD_TIME}}</code></p>
+    </div>
+  </body>
+</html>

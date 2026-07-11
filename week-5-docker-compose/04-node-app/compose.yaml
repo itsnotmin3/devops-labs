@@ -1,0 +1,7 @@
+services:
+  api:
+    build: ./app          # Compose builds ./app/Dockerfile for you
+    ports:
+      - "3000:3000"
+    environment:
+      GREETING: "Hello from Compose"

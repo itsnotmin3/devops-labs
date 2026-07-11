@@ -1,0 +1,8 @@
+{
+  "name": "web-frontend",
+  "version": "1.0.0",
+  "description": "Static site with a build step to demo a multi-stage Dockerfile",
+  "scripts": {
+    "build": "node build.js"
+  }
+}

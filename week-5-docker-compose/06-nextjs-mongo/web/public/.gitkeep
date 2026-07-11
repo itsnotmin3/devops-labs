@@ -1,0 +1,1 @@
+# keeps the public/ folder so the Dockerfile COPY works

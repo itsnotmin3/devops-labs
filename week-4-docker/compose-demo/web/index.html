@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Compose demo — web + api + mongo</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; background: #f0fdf4; }
+      .card { text-align: center; padding: 40px 52px; background: #fff; border: 3px solid #16a34a; border-radius: 20px; box-shadow: 0 16px 40px #16a34a22; }
+      h1 { color: #15803d; margin: 0.1em 0; }
+      .count { font-size: 64px; font-weight: 800; color: #15803d; }
+      button { margin-top: 12px; padding: 10px 20px; border: 0; border-radius: 10px; background: #16a34a; color: #fff; font-size: 15px; cursor: pointer; }
+      pre { text-align: left; background: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 12px; overflow-x: auto; }
+      small { color: #64748b; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>🧩 web → api → mongo</h1>
+      <p><small>nginx serves this page and proxies <code>/api</code> to the Node service</small></p>
+      <div class="count" id="count">—</div>
+      <p><small>total visits (stored in MongoDB)</small></p>
+      <button onclick="load()">Hit the API again</button>
+      <pre id="out">loading…</pre>
+    </div>
+    <script>
+      async function load() {
+        const r = await fetch('/api')
+        const d = await r.json()
+        document.getElementById('count').textContent = d.visits
+        document.getElementById('out').textContent = JSON.stringify(d, null, 2)
+      }
+      load()
+    </script>
+  </body>
+</html>

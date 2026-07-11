@@ -1,0 +1,8 @@
+services:
+  db:
+    image: mongo:8
+    volumes:
+      - mongo-data:/data/db     # named volume -> data survives down/up
+
+volumes:
+  mongo-data:

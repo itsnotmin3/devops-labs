@@ -1,0 +1,7 @@
+# never commit secrets or build artifacts
+.env
+node_modules
+.next
+dist
+*.log
+.DS_Store
