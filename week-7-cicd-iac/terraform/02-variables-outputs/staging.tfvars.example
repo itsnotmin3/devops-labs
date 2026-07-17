@@ -1,0 +1,2 @@
+environment = "staging"
+suffix      = "4471"   # <- change to your own digits

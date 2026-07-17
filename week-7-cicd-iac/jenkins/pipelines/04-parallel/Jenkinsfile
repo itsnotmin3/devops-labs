@@ -1,0 +1,82 @@
+// 04 — parallel stages and conditional execution.
+//
+// New ideas: `parallel` (buy back wall-clock time) and `when` (a stage that
+// only runs on some branches).
+//
+// Session 18 said: under ten minutes, or people route around your pipeline.
+// This is how you buy the time back.
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Install') {
+            steps {
+                dir('app') { sh 'npm ci' }
+            }
+        }
+
+        // Lint, unit tests and the security scan do not depend on each other.
+        // In sequence: 3 minutes. In parallel: the longest one.
+        stage('Verify') {
+            parallel {
+                stage('Lint') {
+                    steps { dir('app') { sh 'npm run lint' } }
+                }
+                stage('Unit tests') {
+                    steps { dir('app') { sh 'npm test' } }
+                }
+                stage('Audit') {
+                    steps {
+                        dir('app') {
+                            // `|| true` so a known advisory does not block the
+                            // class. In a real pipeline you would NOT do this —
+                            // a gate that cannot fail is not a gate.
+                            sh 'npm audit --audit-level=high || true'
+                        }
+                    }
+                }
+            }
+        }
+
+        // `when` = this stage only runs if the condition holds.
+        // Same file, different behaviour, decided by the branch.
+        stage('Deploy to staging') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo 'Deploying to staging (main only)'
+            }
+        }
+
+        stage('Deploy to production') {
+            when {
+                allOf {
+                    branch 'main'
+                    // Only when a human ticked the box at build time.
+                    expression { return params.DEPLOY_PROD == true }
+                }
+            }
+            steps {
+                echo 'Deploying to PRODUCTION'
+            }
+        }
+    }
+}
+
+// Add this above `stages` to get the DEPLOY_PROD checkbox:
+//
+//   parameters {
+//       booleanParam(name: 'DEPLOY_PROD', defaultValue: false,
+//                    description: 'Tick to deploy to production')
+//   }
+//
+// Note: parameters only appear AFTER the first run — Jenkins has to execute
+// the Jenkinsfile once to discover they exist. Everyone hits this and thinks
+// it is broken. Run it once, then look for "Build with Parameters".
+//
+// Try this:
+//   1. Run on main. Watch Lint/Unit/Audit run side by side in the stage view.
+//   2. Make a branch, push, run. Staging is SKIPPED — not failed. Skipped.
+//   3. Time it: sum of the three vs the longest of the three.

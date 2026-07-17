@@ -1,0 +1,12 @@
+# Plugins the Session 20 labs need.
+# Jenkins ships almost nothing by default — every capability is a plugin.
+# That is the trade Session 20 describes: total flexibility, total ownership.
+
+workflow-aggregator      # Pipeline — the whole declarative Jenkinsfile engine
+git                      # clone from git
+credentials-binding      # withCredentials { } — lab 05
+docker-workflow          # docker.build / docker.image — lab 06
+pipeline-stage-view      # the visual stage timeline everyone screenshots
+timestamper              # timestamps in console output
+ws-cleanup               # cleanWs() — a fresh workspace per run
+blueocean                # nicer pipeline UI (optional, but good for a walkthrough)

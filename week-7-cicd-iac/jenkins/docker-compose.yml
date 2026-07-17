@@ -1,0 +1,30 @@
+# Jenkins for the Session 20 walkthrough.
+#
+#   docker compose up -d --build
+#   docker compose logs -f jenkins     <- the setup password is in here
+#   open http://localhost:8080
+#
+# This is a LAB. It gives Jenkins access to the host Docker socket so your
+# pipelines can build images — convenient here, and a real privilege
+# escalation on a shared machine. Never do this on a server that matters.
+
+services:
+  jenkins:
+    build: .
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8080:8080"    # web UI
+      - "50000:50000"  # agent connections (unused in this lab — one controller only)
+    volumes:
+      # Jenkins' whole world lives here: jobs, config, plugins, credentials.
+      # A named volume means `docker compose down` does NOT wipe your work.
+      - jenkins_home:/var/jenkins_home
+      # The host's Docker daemon. This is what lets a pipeline run `docker build`.
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # Skips the "unlock Jenkins" wizard nag about the setup URL.
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+
+volumes:
+  jenkins_home:

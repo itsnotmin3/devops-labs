@@ -1,0 +1,83 @@
+// 05 — credentials. The secret never appears in this file.
+//
+// SETUP (do this first, or the pipeline fails immediately):
+//   Manage Jenkins -> Credentials -> System -> Global credentials -> Add
+//     1. Kind: Secret text
+//        ID:   my-api-key          Secret: anything, e.g. hunter2
+//     2. Kind: Username with password
+//        ID:   dockerhub-creds     Username/Password: your real ones (or junk)
+//
+// The ID is what the Jenkinsfile references. The VALUE lives encrypted in
+// Jenkins and is never in git.
+
+pipeline {
+    agent any
+
+    environment {
+        // The simplest form: bind a credential to an env var for the whole
+        // pipeline. Jenkins injects it and MASKS it in the console output.
+        API_KEY = credentials('my-api-key')
+
+        // A username/password credential expands into THREE variables:
+        //   DOCKER_CREDS      -> "username:password"
+        //   DOCKER_CREDS_USR  -> username
+        //   DOCKER_CREDS_PSW  -> password
+        // The _USR / _PSW suffixes are a Jenkins convention worth remembering.
+        DOCKER_CREDS = credentials('dockerhub-creds')
+    }
+
+    stages {
+        stage('Prove it is there, without printing it') {
+            steps {
+                // Jenkins replaces the secret with **** in the log.
+                sh 'echo "The key is: $API_KEY"'
+
+                // Safe: length without value.
+                sh 'echo "Key length: ${#API_KEY}"'
+
+                // The username is not secret; the password is.
+                sh 'echo "Docker user: $DOCKER_CREDS_USR"'
+            }
+        }
+
+        stage('Scoped to one block') {
+            steps {
+                // withCredentials is the better pattern: the secret exists
+                // ONLY inside this block, not for the whole pipeline.
+                // Smaller blast radius, same convenience.
+                withCredentials([string(credentialsId: 'my-api-key', variable: 'KEY')]) {
+                    sh '''
+                        curl -s -H "Authorization: Bearer $KEY" \
+                             https://api.example.com/health || true
+                    '''
+                }
+                // $KEY does not exist out here.
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// THE THING TO ACTUALLY UNDERSTAND
+//
+// Masking is a courtesy, not a security boundary. Jenkins masks the exact
+// string. It cannot mask what it cannot recognise:
+//
+//     sh 'echo $API_KEY'              -> ****        (masked)
+//     sh 'echo $API_KEY | base64'     -> aHVudGVyMg==  (NOT masked)
+//     sh 'echo ${API_KEY:0:3}'        -> hun         (NOT masked)
+//
+// Anyone who can edit a Jenkinsfile can exfiltrate every credential the job
+// can reach. That is not a Jenkins bug — it is what "the pipeline runs code
+// you wrote" means, and it is true of GitHub Actions too (Session 19).
+//
+// The defence is not masking. It is:
+//   - scope credentials to the folder/job that needs them, never global
+//   - review changes to the Jenkinsfile like you review production code
+//   - short-lived tokens over permanent passwords, always
+//
+// Try this:
+//   1. Run it. Find the **** in the console.
+//   2. Add `sh 'echo $API_KEY | base64'`. Run again. Read the output.
+//      That is your secret, in the log, in plain sight.
+//   3. Now you understand why the credential store is not the whole answer.

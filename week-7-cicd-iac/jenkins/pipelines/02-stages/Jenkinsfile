@@ -1,0 +1,60 @@
+// 02 — stages, environment, and what happens when something fails.
+//
+// New ideas: multiple stages, an `environment` block, built-in variables,
+// and `post` — the blocks that run whether you succeeded or not.
+
+pipeline {
+    agent any
+
+    // Available to every stage as an env var AND as a Groovy string.
+    environment {
+        APP_NAME = 'store-api'
+        // Jenkins sets BUILD_NUMBER for you. Composing it into a tag here
+        // is the beginning of "an artifact must have an identity" (Session 18).
+        IMAGE_TAG = "${env.APP_NAME}:${env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "Building ${env.APP_NAME}"
+                echo "This is build number ${env.BUILD_NUMBER}"
+                echo "Jenkins thinks the job is called ${env.JOB_NAME}"
+                echo "Would produce image: ${env.IMAGE_TAG}"
+                sh 'sleep 2'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                sh 'sleep 2'
+                // Uncomment to watch a failure. The pipeline stops HERE:
+                // Deploy never runs, post/failure does, post/always does.
+                // sh 'exit 1'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
+            }
+        }
+    }
+
+    // post runs after the stages, and it is what makes a pipeline useful
+    // rather than just a script with a website.
+    post {
+        always  { echo "Done. Result: ${currentBuild.currentResult}" }
+        success { echo 'Green. This is where you notify Slack.' }
+        failure { echo 'Red. This is where you page someone.' }
+        cleanup { echo 'Runs dead last, no matter what.' }
+    }
+}
+
+// Try this:
+//   1. Run it. Watch the three boxes go green in order.
+//   2. Uncomment the `exit 1`. Run again.
+//      - Deploy is skipped entirely (a failed stage stops the pipeline)
+//      - failure AND always both run
+//   3. Note BUILD_NUMBER increments every run. That is your artifact identity.

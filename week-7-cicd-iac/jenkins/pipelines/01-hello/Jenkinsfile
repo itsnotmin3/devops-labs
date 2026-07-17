@@ -1,0 +1,35 @@
+// 01 — the smallest Jenkinsfile that is genuinely valid.
+//
+// Nothing is missing from this. It is a complete pipeline.
+// Everything after this adds ONE idea at a time.
+//
+// Run it:  New Item -> Pipeline -> paste this into the Pipeline script box -> Build Now
+
+pipeline {
+    // WHERE this runs. `any` = any available executor.
+    // On this lab setup that is the controller itself, which is convenient
+    // and, on a real server, a thing you should never do.
+    agent any
+
+    stages {
+        // A stage is a named phase. It is what you see as a box in the UI.
+        stage('Hello') {
+            steps {
+                // A step is one thing to do.
+                echo 'Hello from Jenkins'
+                sh 'date'
+                sh 'whoami'
+            }
+        }
+    }
+}
+
+// What to notice:
+//   - pipeline / agent / stages / steps is the skeleton of EVERY Jenkinsfile.
+//   - Compare to GitHub Actions (Session 19):
+//       Jenkins            GitHub Actions
+//       pipeline           workflow (the file)
+//       agent              runs-on
+//       stage              job
+//       step               step
+//     Same shape. Different words. That is the whole point of Session 20.

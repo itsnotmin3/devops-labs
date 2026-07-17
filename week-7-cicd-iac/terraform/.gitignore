@@ -1,6 +1,19 @@
-# NEVER commit state — it can contain secrets and is environment-specific
-.terraform/
-.terraform.lock.hcl
+# NEVER commit state — it holds every attribute AWS returned, including
+# secrets, in plaintext. If it reaches a public repo, rotate everything in it.
 *.tfstate
 *.tfstate.*
-terraform.tfvars
+.terraform.tfstate.lock.info
+
+# Provider binaries — hundreds of MB, re-downloadable by `terraform init`
+.terraform/
+
+# Your real values — often an IP, a key name, sometimes worse
+*.tfvars
+!*.tfvars.example
+
+crash.log
+crash.*.log
+
+# NOTE: .terraform.lock.hcl is NOT ignored, on purpose.
+# It pins the exact provider versions the whole team resolves to — it is a
+# lockfile, same idea as package-lock.json. Commit it.

@@ -1,0 +1,101 @@
+// 03 — a real CI pipeline: checkout, install, lint, test, build.
+//
+// This is the Jenkins translation of 03-node-ci.yml from the GitHub Actions
+// labs. Put them side by side — the concepts map one to one.
+//
+// Point this at the ../app folder, or at your own Node repo.
+
+pipeline {
+    agent any
+
+    options {
+        // Keep 10 builds, not 500. Jenkins keeps EVERY build forever by
+        // default and the disk fills up. Self-hosted means you own the disk.
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Do not let a stuck build run all night holding an executor.
+        timeout(time: 15, unit: 'MINUTES')
+        // Prefix every console line with a timestamp.
+        timestamps()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // If the job is "Pipeline script from SCM", Jenkins has already
+                // cloned the repo and this is a no-op you can delete.
+                // If you pasted the script into the box, uncomment and set your repo:
+                // git branch: 'main', url: 'https://github.com/you/your-app.git'
+                echo 'Source is in the workspace'
+                sh 'ls -la'
+            }
+        }
+
+        stage('Install') {
+            steps {
+                dir('app') {
+                    // npm ci, NOT npm install. ci installs exactly what the
+                    // lockfile says and fails if package.json disagrees.
+                    // install can silently resolve a different tree — which
+                    // means CI passed on dependencies production never sees.
+                    sh 'npm ci'
+                }
+            }
+        }
+
+        stage('Lint') {
+            steps {
+                dir('app') {
+                    sh 'npm run lint'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir('app') {
+                    sh 'npm test'
+                }
+            }
+            post {
+                // A `post` block can live on a stage, not just the pipeline.
+                always {
+                    // Publish the JUnit XML so Jenkins shows a test trend graph
+                    // and tells you WHICH test failed without opening the log.
+                    // allowEmptyResults so the stage does not go red just
+                    // because you have not wired up a reporter yet.
+                    junit allowEmptyResults: true, testResults: 'app/junit.xml'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('app') {
+                    sh 'npm run build --if-present'
+                }
+                // Keep the output. This is the artifact — the thing you
+                // promote. Session 18: build once, promote the same bytes.
+                archiveArtifacts artifacts: 'app/dist/**', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        always {
+            // Wipe the workspace. Jenkins REUSES it between builds — that is
+            // the biggest difference from a GitHub Actions runner, which is
+            // always a fresh VM. A stale file from build 41 breaking build 42
+            // is the classic self-hosted CI ghost.
+            cleanWs()
+        }
+    }
+}
+
+// Compare to GitHub Actions:
+//   actions/checkout@v4        ->  git / SCM checkout
+//   actions/setup-node@v4      ->  node is baked into the image (Dockerfile)
+//   run: npm ci                ->  sh 'npm ci'
+//   upload-artifact            ->  archiveArtifacts
+//
+// The gap that matters: GitHub gives you a clean VM every time.
+// Jenkins gives you the same workspace until you clean it yourself.

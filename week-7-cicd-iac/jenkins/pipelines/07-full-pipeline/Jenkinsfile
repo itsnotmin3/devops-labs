@@ -1,0 +1,164 @@
+// 07 — everything, assembled. The real thing.
+//
+// checkout -> install -> [lint | test | audit] -> build image -> scan
+//   -> push -> deploy staging (auto) -> HUMAN GATE -> deploy production
+//
+// This is the continuous delivery model from Session 18, expressed in Jenkins.
+// Compare it line by line with 08-full-pipeline.yml in ../github-actions/.
+
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        // Do not run two of these at once — the second would deploy on top
+        // of the first, mid-flight.
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        IMAGE = 'yourname/store-api'
+        TAG   = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Install') {
+            steps {
+                dir('app') { sh 'npm ci' }
+            }
+        }
+
+        stage('Verify') {
+            parallel {
+                stage('Lint')  { steps { dir('app') { sh 'npm run lint' } } }
+                stage('Test')  { steps { dir('app') { sh 'npm test' } } }
+                stage('Audit') { steps { dir('app') { sh 'npm audit --audit-level=high || true' } } }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'app/junit.xml'
+                }
+            }
+        }
+
+        stage('Build image') {
+            steps {
+                dir('app') {
+                    sh "docker build -t ${IMAGE}:${TAG} ."
+                }
+            }
+        }
+
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'REG_USER',
+                    passwordVariable: 'REG_PASS'
+                )]) {
+                    sh 'echo "$REG_PASS" | docker login -u "$REG_USER" --password-stdin'
+                    sh "docker push ${IMAGE}:${TAG}"
+                }
+            }
+        }
+
+        stage('Deploy to staging') {
+            when { branch 'main' }
+            steps {
+                sshagent(credentials: ['staging-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@staging.example.com '
+                            docker pull ${IMAGE}:${TAG} &&
+                            docker stop store-api || true &&
+                            docker rm store-api || true &&
+                            docker run -d --name store-api -p 80:3000 --restart unless-stopped ${IMAGE}:${TAG}
+                        '
+                    """
+                }
+            }
+        }
+
+        stage('Smoke test staging') {
+            when { branch 'main' }
+            steps {
+                // Deploying is not the same as working. Prove it responds
+                // before you offer anyone a production button.
+                sh 'sleep 5'
+                sh 'curl -fsS http://staging.example.com/health'
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // THE HUMAN GATE. This is the line between continuous DELIVERY
+        // (a human approves) and continuous DEPLOYMENT (nobody does).
+        // ------------------------------------------------------------------
+        stage('Approve production') {
+            when { branch 'main' }
+            steps {
+                // `timeout` wrapping `input` matters: without it, a forgotten
+                // build waits FOREVER holding an executor. On a busy Jenkins
+                // that is how the whole queue silently stops.
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: "Deploy ${IMAGE}:${TAG} to PRODUCTION?",
+                          ok: 'Ship it',
+                          submitter: 'admin'   // only these users may click
+                }
+            }
+        }
+
+        stage('Deploy to production') {
+            when { branch 'main' }
+            steps {
+                sshagent(credentials: ['prod-ssh-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ubuntu@prod.example.com '
+                            docker pull ${IMAGE}:${TAG} &&
+                            docker stop store-api || true &&
+                            docker rm store-api || true &&
+                            docker run -d --name store-api -p 80:3000 --restart unless-stopped ${IMAGE}:${TAG}
+                        '
+                    """
+                }
+                echo "Production is now running ${IMAGE}:${TAG}"
+            }
+        }
+    }
+
+    post {
+        always  { cleanWs() }
+        success { echo "OK: ${IMAGE}:${TAG} is live" }
+        failure { echo "FAILED at ${env.STAGE_NAME}. Nothing was promoted." }
+        aborted { echo 'Someone declined the gate, or it timed out. Correct outcome.' }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// SETUP
+//
+// Credentials needed (Manage Jenkins -> Credentials):
+//   dockerhub-creds   Username with password
+//   staging-ssh-key   SSH Username with private key  (username: ubuntu)
+//   prod-ssh-key      SSH Username with private key  (username: ubuntu)
+//
+// sshagent() needs the SSH Agent plugin. Add `ssh-agent` to plugins.txt and
+// rebuild, or install it from Manage Jenkins -> Plugins.
+//
+// ---------------------------------------------------------------------------
+// ROLLBACK — the question to ask out loud
+//
+// Production is on 9f2c1ab and it is broken. What do you do?
+//
+//   ssh ubuntu@prod.example.com '
+//     docker stop store-api && docker rm store-api &&
+//     docker run -d --name store-api -p 80:3000 yourname/store-api:PREVIOUS_SHA
+//   '
+//
+// That works ONLY because the previous image still exists in the registry
+// under a name that identifies it. This is the entire payoff of tagging by
+// SHA instead of `latest` — rollback is just "run the old tag".
+//
+// If you had deployed `latest`, there is no old tag to run. You would be
+// rebuilding from a git revert, under pressure, at 3am, hoping the build is
+// reproducible. That is not a rollback. That is a second deploy.

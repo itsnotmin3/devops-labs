@@ -1,0 +1,97 @@
+// 06 — build the Week 4 image, tag it with the commit SHA, push it.
+//
+// Needs: the docker socket mounted (docker-compose.yml does this) and a
+// `dockerhub-creds` credential (see lab 05).
+//
+// This is where the Week 4 Dockerfile and the Session 18 artifact rule meet.
+
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY  = 'docker.io'
+        IMAGE     = 'yourname/store-api'   // <- change to your Docker Hub user
+        // GIT_COMMIT is set by Jenkins when the job came from SCM.
+        // Fall back to the build number if you pasted the script in the box.
+        TAG       = "${env.GIT_COMMIT ? env.GIT_COMMIT.take(7) : env.BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Sanity check') {
+            steps {
+                // If this fails with "permission denied ... docker.sock",
+                // the jenkins user is not in the host's docker group.
+                // See the DOCKER_GID note in the Dockerfile.
+                sh 'docker version'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('app') {
+                    sh "docker build -t ${IMAGE}:${TAG} ."
+                    // Also tag latest — a convenience pointer, NEVER the
+                    // thing you deploy. See the note at the bottom.
+                    sh "docker tag ${IMAGE}:${TAG} ${IMAGE}:latest"
+                }
+            }
+        }
+
+        stage('Scan') {
+            steps {
+                // A gate before you push. In a real pipeline, drop the
+                // `|| true` and let a critical CVE fail the build.
+                sh """
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      aquasec/trivy:latest image \
+                      --severity HIGH,CRITICAL --exit-code 0 \
+                      ${IMAGE}:${TAG} || true
+                """
+            }
+        }
+
+        stage('Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'REG_USER',
+                    passwordVariable: 'REG_PASS'
+                )]) {
+                    // --password-stdin, never `docker login -p $PASS`.
+                    // The -p form puts the password in the process list,
+                    // where every other user on the box can read it.
+                    sh '''
+                        echo "$REG_PASS" | docker login -u "$REG_USER" --password-stdin
+                    '''
+                    sh "docker push ${IMAGE}:${TAG}"
+                    sh "docker push ${IMAGE}:latest"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Self-hosted means YOUR disk fills up. Every build leaves layers
+            // behind. A Jenkins box that dies of a full disk after three months
+            // is a rite of passage; skip it.
+            sh "docker rmi ${IMAGE}:${TAG} ${IMAGE}:latest || true"
+            sh 'docker logout || true'
+            sh 'docker image prune -f || true'
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// WHY THE SHA TAG IS THE WHOLE POINT
+//
+//   store-api:9f2c1ab  names exactly one commit. Forever. Immutable.
+//   store-api:latest   names whatever was pushed most recently.
+//
+// You cannot roll back to `latest`. You cannot say "prod is running latest"
+// and mean anything by it. You cannot reproduce a bug from `latest`.
+//
+// Same rule as Session 19, same rule as Session 18: the artifact must have
+// an identity, or you cannot promote it and you cannot go back to it.
+// Tag with the SHA. Deploy the SHA. `latest` is a bookmark for humans.

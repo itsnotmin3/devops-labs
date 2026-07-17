@@ -1,10 +1,28 @@
 # Week 7 — CI/CD & Infrastructure as Code
 
+Five sessions. Three labs. One argument: **stop doing it by hand.**
+
 ```
 week-7-cicd-iac/
-├── github-actions/    8 progressive workflows — start at 01, build up to a real pipeline
-└── terraform/         provision an EC2 + security group + nginx from code
+├── github-actions/    S19 — 8 progressive workflows, hosted CI
+├── jenkins/           S20 — 7 progressive Jenkinsfiles, self-hosted CI
+└── terraform/         S21+S22 — 7 progressive labs, infrastructure as code
 ```
+
+| Session | Lab | The idea |
+|---|---|---|
+| 18 — CI/CD Fundamentals | *(theory)* | Every pipeline is trigger → build → test → package → deploy |
+| 19 — GitHub Actions | `github-actions/` | Someone else's machines, by the minute |
+| 20 — Jenkins | `jenkins/` | Your machines, your responsibility |
+| 21 — IaC concepts | *(theory)* | Why click-ops fails |
+| 22 — Terraform | `terraform/` | The Week 6 environment, as text |
+
+Each lab folder is numbered and **builds on itself** — start at `01` and add
+one idea at a time. Each has its own README.
+
+> The flow across the week: S19 and S20 automate how *code* reaches the
+> servers. S21 and S22 turn the *servers themselves* into code. By Friday,
+> nothing about your infrastructure exists only in someone's memory.
 
 ---
 
@@ -67,24 +85,76 @@ Event (push)  ─►  Workflow (a .yml file)
 
 ---
 
-# Terraform — infrastructure from code
+# Jenkins — the self-hosted half
 
-Provisions an EC2 instance + security group and installs nginx on first boot.
+Same concepts as GitHub Actions. Different words, and a lot more
+responsibility: your server, your plugins, your disk, your backups.
 
 ```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars   # fill in key_name and my_ip
-curl ifconfig.me                                # your IP for my_ip (add /32)
-
-terraform init      # download the AWS provider
-terraform plan      # SHOW me what you would change (read this every time)
-terraform apply     # do it — outputs the public IP + ssh command
-# open the url output in a browser
-
-terraform destroy   # tear it all down (do this after class!)
+cd jenkins
+docker compose up -d --build
+docker compose logs -f jenkins     # the setup password is in here
+# open http://localhost:8080
 ```
 
-Needs AWS credentials: `aws configure` (or exported env vars).
+Seven Jenkinsfiles in `jenkins/pipelines/`, 01 → 07, ending in a full pipeline
+with a human approval gate. There is a tiny `app/` in there so the pipelines
+build something real.
 
-⚠️ `terraform.tfstate` is **git-ignored** — it can contain secrets and is
-environment-specific. In a team you keep it in remote state (an S3 bucket).
+**→ Full instructions: [`jenkins/README.md`](jenkins/README.md)**
+
+| Jenkins | GitHub Actions |
+|---------|----------------|
+| `pipeline { }` | the workflow file |
+| `agent` | `runs-on` |
+| `stage` | `job` |
+| `credentials('id')` | `${{ secrets.NAME }}` |
+| `when { branch 'main' }` | `if: github.ref == ...` |
+| a plugin | an action |
+
+The concepts transfer completely. What does not transfer is **who is
+responsible when it breaks.**
+
+⚠️ The lab mounts the host Docker socket into the Jenkins container. That is
+effectively root on the host — fine on your laptop for an afternoon, never on
+a server that matters.
+
+---
+
+# Terraform — infrastructure from code
+
+Seven progressive labs: the smallest working config → the entire Week 6
+environment as text → modules → remote state → a pipeline that plans on the
+pull request and applies on merge.
+
+```bash
+cd terraform/01-first-bucket
+terraform init
+terraform plan       # SHOW me what you would do — read this, every time
+terraform apply
+terraform apply      # again. Nothing happens. That is idempotency.
+terraform destroy    # ALWAYS
+```
+
+**→ Full instructions: [`terraform/README.md`](terraform/README.md)**
+
+| # | Teaches |
+|---|---------|
+| 01 | providers, resources, the init/plan/apply/destroy loop, state |
+| 02 | variables, locals, outputs, tfvars, one config → two environments |
+| 03 | data sources (never hard-code an AMI), implicit dependencies |
+| 04 | the full VPC + subnet + IGW + SG + EC2 + S3, in 90 seconds |
+| 05 | modules — one definition, separate state per environment |
+| 06 | S3 remote backend with locking, and why local state is a bus factor of 1 |
+| 07 | plan on the PR, apply on merge, with OIDC instead of stored keys |
+
+⚠️ **`terraform destroy` at the end of every sitting.** A forgotten EC2 is
+~$8/month; a forgotten NAT gateway is ~$32/month. Terraform makes it trivially
+easy to create forty things at once, and exactly as easy to forget you did.
+
+⚠️ **`terraform.tfstate` holds every secret in plaintext** and is git-ignored
+here on purpose. If it ever reaches a public repo, rotate everything in it —
+deleting it in a later commit does nothing, the old commit still has it.
+
+`.terraform.lock.hcl` **is** committed on purpose: it pins provider versions
+for the team, exactly like `package-lock.json`.
