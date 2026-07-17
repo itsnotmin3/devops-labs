@@ -1,0 +1,20 @@
+# 05 — A matrix runs the SAME job many times with different inputs.
+# One job definition -> three parallel runs.
+name: 05 Matrix
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # keep going even if one version fails
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node -v
+      - run: npm ci && npm test --if-present

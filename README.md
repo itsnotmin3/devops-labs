@@ -13,7 +13,9 @@ self-contained with its own README.
 | **Week 3 — Networking & Git** | `week-3-networking-git/` | `networking-investigation.md` (dig/ping/traceroute/curl/ss) + `make-conflict.sh` and `branching-demo.sh`. |
 | **Week 4 — Docker** | `week-4-docker/` | A simple Dockerfile, a multi-stage Dockerfile, and a Compose stack. |
 | **Week 5 — Docker Compose** | `week-5-docker-compose/` | 6 progressive projects: hello → named volume → mongo-express → build-your-own → full-stack Notes app → **Next.js + MongoDB**. |
+| **Week 7 — CI/CD & IaC** | `week-7-cicd-iac/` | **8 progressive GitHub Actions workflows** (hello → triggers → CI → jobs/needs → matrix → secrets → Docker push → full deploy pipeline) + a Terraform EC2 stack. |
 | **Week 8 — Kubernetes** | `week-8-kubernetes/` | K3s walkthrough: deploy → expose → scale → self-heal, imperative + declarative (`manifests/`). |
+| **Week 9 — Monitoring** | `week-9-monitoring/` | One-command observability stack: Prometheus + node-exporter + Loki + Promtail + Grafana (datasources pre-wired), with PromQL/LogQL labs. |
 
 ## Requirements
 - **Docker** for the docker/compose labs: `curl -fsSL https://get.docker.com | sh`

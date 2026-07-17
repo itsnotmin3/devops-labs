@@ -1,0 +1,64 @@
+# 08 — The whole thing: test -> build image -> deploy to your server.
+# This is the pipeline you actually ship with.
+#
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   SSH_HOST  your server IP        (e.g. 54.23.10.45)
+#   SSH_USER  ubuntu
+#   SSH_KEY   the CONTENTS of your private .pem key
+name: 08 Full pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # 1) gate: nothing ships unless tests pass
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test --if-present
+
+  # 2) build the image and push it
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
+  # 3) pull the new image on the server and restart
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}:latest
+            docker stop app || true
+            docker rm app || true
+            docker run -d --name app -p 3000:3000 --restart unless-stopped \
+              ghcr.io/${{ github.repository }}:latest
+            docker image prune -f

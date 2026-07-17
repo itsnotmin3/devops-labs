@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars (git-ignored) and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+key_name = "my-key"          # an existing EC2 key pair name
+my_ip    = "1.2.3.4/32"      # your IP: curl ifconfig.me
+region   = "eu-west-1"

@@ -1,0 +1,31 @@
+# 03 — A real CI pipeline: get the code, install, test, build.
+# This is the one that actually earns its keep.
+name: 03 Node CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # the runner starts EMPTY — you must fetch your own code first
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm # cache ~/.npm between runs = much faster
+
+      - name: Install (clean, reproducible)
+        run: npm ci
+
+      - name: Test
+        run: npm test --if-present
+
+      - name: Build
+        run: npm run build --if-present

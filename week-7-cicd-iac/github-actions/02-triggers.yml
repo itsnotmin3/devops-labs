@@ -1,0 +1,21 @@
+# 02 — WHEN does a workflow run? That is the "on:" block (events).
+name: 02 Triggers
+
+on:
+  push:
+    branches: [main] # every push to main
+  pull_request: # every PR opened/updated
+  workflow_dispatch: # a manual button
+  schedule:
+    - cron: "0 2 * * *" # every night at 02:00 UTC (same cron as Week 1!)
+
+jobs:
+  show-context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: What triggered me?
+        run: |
+          echo "event  : ${{ github.event_name }}"
+          echo "ref    : ${{ github.ref }}"
+          echo "actor  : ${{ github.actor }}"
+          echo "repo   : ${{ github.repository }}"

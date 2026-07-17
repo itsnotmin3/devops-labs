@@ -1,0 +1,22 @@
+# 04 — Multiple jobs. Jobs run in PARALLEL by default;
+# "needs" creates order (and a quality gate).
+name: 04 Jobs & needs
+
+on: workflow_dispatch
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "linting..."
+
+  test:
+    runs-on: ubuntu-latest # runs at the SAME TIME as lint
+    steps:
+      - run: echo "testing..."
+
+  deploy:
+    needs: [lint, test] # waits for BOTH, and only runs if both pass
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "deploying — only reached when lint AND test are green"

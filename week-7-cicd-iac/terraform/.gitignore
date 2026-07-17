@@ -1,0 +1,6 @@
+# NEVER commit state — it can contain secrets and is environment-specific
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform.tfvars

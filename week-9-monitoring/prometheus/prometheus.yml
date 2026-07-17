@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s # how often to pull metrics from each target
+
+scrape_configs:
+  # Prometheus scrapes itself
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # host metrics (CPU, memory, disk, network)
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"] # service name = Compose DNS
+  # Add your own app here once it exposes /metrics:
+  # - job_name: my-app
+  #   static_configs:
+  #     - targets: ['app:3000']

@@ -1,0 +1,11 @@
+# 01 — The smallest possible workflow.
+# One event, one job, one step.
+name: 01 Hello
+
+on: workflow_dispatch # run it by hand from the Actions tab
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest # the machine GitHub gives you
+    steps:
+      - run: echo "Hello from GitHub Actions!"
