@@ -7,6 +7,7 @@
 //
 // Nothing here is production code — it exists to make graphs move and logs fill.
 
+const os = require('os')
 const express = require('express')
 const client = require('prom-client')
 const pino = require('pino')
@@ -14,9 +15,14 @@ const pino = require('pino')
 const app = express()
 
 // pino logs JSON to stdout by default — that is the whole point.
-// The formatter makes it emit level as a WORD ("error") instead of a number (50),
-// so LogQL queries like  {app="store-api"} | json | level="error"  work.
-const log = pino({ formatters: { level: (label) => ({ level: label }) } })
+//  - base.instance = the container's hostname, so every line says WHICH replica
+//    produced it (the "which one handled the failing request?" story).
+//  - the level formatter emits level as a WORD ("error") not a number (50), so
+//    LogQL queries like  {app="store-api"} | json | level="error"  work.
+const log = pino({
+  base: { instance: os.hostname() },
+  formatters: { level: (label) => ({ level: label }) },
+})
 
 // ---------------------------------------------------------------------------
 // METRICS (Step 2 of the monitoring session)
