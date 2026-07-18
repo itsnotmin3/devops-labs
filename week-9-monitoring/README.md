@@ -27,13 +27,27 @@ week-9-monitoring/
 
 ---
 
+## Before you start
+
+Everything here is Docker — there is nothing else to install.
+
+- **Docker Engine + the Compose plugin.** Check with `docker compose version`.
+- **Free ports:** `3000` (Grafana), `8080` (app), `9090` (Prometheus). Make
+  sure nothing else on the box is using them.
+- **Docker socket reachable** (`/var/run/docker.sock`) — Promtail reads it to
+  collect the app's logs. It is already mounted in the compose file; this only
+  bites on locked-down rootless setups.
+
 ## Run the whole thing
 
 ```bash
 cd week-9-monitoring
-docker compose up -d --build        # --build compiles the app image
-docker compose ps                   # everything should be "Up"
+docker compose up -d --build        # --build compiles the app image (needed the first time)
+docker compose ps                   # all six services should be "Up"
 ```
+
+> First run only needs `--build` because the app is built from `app/Dockerfile`.
+> After that, plain `docker compose up -d` is fine unless you change the app.
 
 | What | Where | Login |
 |------|-------|-------|
