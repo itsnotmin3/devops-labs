@@ -1,13 +1,23 @@
-# A complete local observability stack:
-#   Prometheus (metrics) + node-exporter (host metrics)
-#   Loki (logs) + Promtail (ships logs to Loki)
-#   Grafana (dashboards over both, datasources pre-wired)
+# A complete local observability stack, with an app to watch:
+#   store-api    the instrumented demo app (exposes /metrics, logs JSON)
+#   Prometheus + node-exporter    metrics (the app + the host)
+#   Loki + Promtail               logs (ships the app's container logs)
+#   Grafana                       dashboards over both, pre-wired + a dashboard
 #
-# Start:  docker compose up -d
-# Grafana:    http://SERVER_IP:3000   (admin / admin)
-# Prometheus: http://SERVER_IP:9090
+# Start:  docker compose up -d --build
+#   Grafana:    http://SERVER_IP:3000   (admin / admin)
+#   Prometheus: http://SERVER_IP:9090
+#   The app:    http://SERVER_IP:8080   (Grafana already owns :3000)
 
 services:
+  # ---- the application we are monitoring ----
+  app:
+    build: ./app
+    container_name: store-api
+    ports:
+      - "8080:3000"
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:latest
     ports:
@@ -33,7 +43,9 @@ services:
   promtail:
     image: grafana/promtail:2.9.0
     volumes:
-      - /var/log:/var/log:ro # read the host's logs
+      - /var/log:/var/log:ro # the host's own logs (syslog, auth…)
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro # container stdout
+      - /var/run/docker.sock:/var/run/docker.sock:ro # discover containers
       - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     depends_on:

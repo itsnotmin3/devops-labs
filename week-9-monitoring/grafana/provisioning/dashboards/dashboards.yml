@@ -1,0 +1,12 @@
+# Tells Grafana to load any dashboard .json it finds in this folder on startup.
+apiVersion: 1
+
+providers:
+  - name: store
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

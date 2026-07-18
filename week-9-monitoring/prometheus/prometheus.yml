@@ -11,7 +11,9 @@ scrape_configs:
   - job_name: node
     static_configs:
       - targets: ["node-exporter:9100"] # service name = Compose DNS
-  # Add your own app here once it exposes /metrics:
-  # - job_name: my-app
-  #   static_configs:
-  #     - targets: ['app:3000']
+
+  # OUR APP — it exposes /metrics on :3000 inside the Compose network.
+  # (Container name is store-api; the port is the in-container 3000, not 8080.)
+  - job_name: store-api
+    static_configs:
+      - targets: ["store-api:3000"]
