@@ -1,0 +1,13 @@
+{
+  "name": "ci-demo-app",
+  "version": "1.0.0",
+  "description": "A tiny, dependency-free app so the GitHub Actions labs have something real to lint, test and build",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "lint": "node --check server.js && echo 'lint: ok'",
+    "test": "node --test",
+    "build": "mkdir -p dist && cp server.js dist/ && echo 'built -> dist/'"
+  },
+  "license": "MIT"
+}

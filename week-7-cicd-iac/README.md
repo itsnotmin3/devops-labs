@@ -28,6 +28,14 @@ one idea at a time. Each has its own README.
 
 # GitHub Actions — from scratch
 
+> **Want to just see it run first?** There is a ready-to-push project in
+> [`github-actions/demo-app/`](github-actions/demo-app/) — a tiny app with a
+> test, a Dockerfile, and a complete pipeline already at
+> `.github/workflows/ci.yml`. Push it to a **new empty GitHub repo** and the
+> Actions tab runs test → build → push-image live, no editing required. Its
+> README walks the whole demo (including a pull request that goes red). Use it
+> to show the payoff, then come back here to learn each piece from scratch.
+
 Eight workflows that build on each other. **Copy one at a time** into your own app
 repo at `.github/workflows/` and watch it run in the **Actions** tab.
 
