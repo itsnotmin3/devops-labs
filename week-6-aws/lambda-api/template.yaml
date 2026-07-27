@@ -1,0 +1,53 @@
+# AWS SAM template — one Lambda function behind an HTTP API Gateway.
+#
+# SAM is AWS's Infrastructure-as-Code for serverless: this file IS the
+# infrastructure. `sam deploy` creates the function, the API, the routes and
+# the IAM execution role, and wires them together.
+#
+# Deploy:  sam build && sam deploy --guided
+# Remove:  sam delete
+
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Store API — Lambda + API Gateway (Session 18 lab)
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+  StoreApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.handler # file handler.js, exported "handler"
+      CodeUri: ./
+      # Each event below creates one route on the API and points it here.
+      # SAM also creates the function's IAM execution role automatically.
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            Path: /health
+            Method: GET
+        ListProducts:
+          Type: HttpApi
+          Properties:
+            Path: /products
+            Method: GET
+        GetProduct:
+          Type: HttpApi
+          Properties:
+            Path: /products/{id}
+            Method: GET
+        CreateOrder:
+          Type: HttpApi
+          Properties:
+            Path: /orders
+            Method: POST
+
+Outputs:
+  ApiUrl:
+    Description: Base URL of the API — append /health, /products, etc.
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
