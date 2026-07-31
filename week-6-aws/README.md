@@ -6,8 +6,9 @@ worth having as code you can deploy and tear down.
 
 ```
 week-6-aws/
-├── vpc-ec2/        Session 16 — scripted VPC + subnet + gateway + EC2, and teardown
-└── lambda-api/     Session 18 — a four-route store API on Lambda + API Gateway
+├── vpc-ec2/         Session 16 — scripted VPC + subnet + gateway + EC2, and teardown
+├── lambda-api/      Session 18 — a four-route store API on Lambda + API Gateway
+└── weekend-tasks/   7 challenges across the whole AWS week (IAM, VPC/EC2, S3, Lambda)
 ```
 
 ## vpc-ec2
@@ -26,6 +27,15 @@ and delete it when you are done.
 
 → [`lambda-api/README.md`](lambda-api/README.md)
 
+## weekend-tasks
+Seven challenges that put the whole AWS week together — lock down IAM, build a
+VPC and a server, host on S3 with a presigned URL, deploy the serverless API,
+and finally make the API read from S3 — ending in a small serverless app.
+Includes starter files for the integration task.
+
+→ [`weekend-tasks/README.md`](weekend-tasks/README.md)
+
 > The IAM and S3 sessions are walked live in the AWS console and the CLI —
 > there is nothing to copy to a server for those, so they have no lab folder
-> here. VPC/EC2 and serverless are the ones that benefit from being scripted.
+> here. VPC/EC2 and serverless are the ones that benefit from being scripted;
+> the weekend tasks tie all four together.

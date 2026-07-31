@@ -1,0 +1,6 @@
+[
+  { "id": "book", "name": "Paperback", "price": 900 },
+  { "id": "mug", "name": "Coffee mug", "price": 1200 },
+  { "id": "sticker", "name": "Sticker pack", "price": 300 },
+  { "id": "hoodie", "name": "Zip hoodie", "price": 4500 }
+]
