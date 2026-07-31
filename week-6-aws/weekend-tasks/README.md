@@ -119,11 +119,14 @@ Right now `/products` returns a hard-coded list. Make it read from S3 instead.
 
 ## Capstone (stretch) — a real serverless app
 
-Wire a tiny **frontend on S3** that calls your **Lambda API**:
-
-- A static `index.html` that `fetch()`es `/products` from your API and lists them.
-- Enable **CORS** on the API so the browser is allowed to call it.
+A tiny **frontend on S3** that calls your **Lambda API** — a static page that
+lists products and shows reviews on click. A ready starter is in
+[`capstone/`](capstone/): a `handler.py` with the reviews route already in it
+and an `index.html`, plus a step-by-step console walkthrough. Deploy the Lambda,
+add the routes, turn on CORS, host the page on S3, and open it.
 
 That is a complete serverless application — a static frontend on S3 and a JSON
 API on Lambda, with no server anywhere. Everything you learned this week, in one
 small system.
+
+→ [`capstone/README.md`](capstone/README.md)

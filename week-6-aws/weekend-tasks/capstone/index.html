@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Store — serverless capstone</title>
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #0f1115;
+        color: #e6e8ec;
+        padding: 2rem 1rem;
+      }
+      .wrap { max-width: 640px; margin: 0 auto; }
+      h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
+      .sub { color: #9aa4b2; margin: 0 0 1.5rem; }
+      .card {
+        background: #171a21;
+        border: 1px solid #262b36;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+      }
+      .row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+      .name { font-weight: 600; }
+      .price { color: #7ee0a0; font-variant-numeric: tabular-nums; }
+      button {
+        margin-top: 0.6rem;
+        background: #2b6cff;
+        color: white;
+        border: 0;
+        border-radius: 8px;
+        padding: 0.4rem 0.8rem;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:hover { background: #1f5ae0; }
+      .reviews { margin-top: 0.75rem; border-top: 1px solid #262b36; padding-top: 0.6rem; }
+      .review { font-size: 0.92rem; color: #c3cad6; margin: 0.35rem 0; }
+      .stars { color: #ffcf5c; }
+      .muted { color: #9aa4b2; }
+      .err { color: #ff7a7a; }
+      code { background: #262b36; padding: 0.1rem 0.35rem; border-radius: 5px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Store</h1>
+      <p class="sub">A static page on S3, talking to a Lambda API. No server anywhere.</p>
+      <div id="list"><p class="muted">Loading products…</p></div>
+    </div>
+
+    <script>
+      // 1. Paste your API base URL here (the ApiUrl output from `sam deploy`).
+      //    e.g. "https://abc123.execute-api.ap-south-1.amazonaws.com"
+      const API = "PASTE_YOUR_API_URL_HERE";
+
+      const money = (cents) => "$" + (cents / 100).toFixed(2);
+      const starRow = (n) => "★".repeat(n) + "☆".repeat(5 - n);
+
+      async function loadProducts() {
+        const list = document.getElementById("list");
+        if (API.includes("PASTE_YOUR")) {
+          list.innerHTML =
+            '<p class="err">Set the <code>API</code> value at the top of this file to your ApiUrl first.</p>';
+          return;
+        }
+        try {
+          const res = await fetch(API + "/products");
+          const data = await res.json();
+          list.innerHTML = "";
+          for (const p of data.products) {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML =
+              '<div class="row"><span class="name"></span><span class="price"></span></div>' +
+              '<button>Show reviews</button><div class="reviews" hidden></div>';
+            card.querySelector(".name").textContent = p.name;
+            card.querySelector(".price").textContent = money(p.price);
+            const box = card.querySelector(".reviews");
+            card.querySelector("button").onclick = () => loadReviews(p.id, box);
+            list.appendChild(card);
+          }
+        } catch (e) {
+          list.innerHTML = '<p class="err">Could not reach the API. Is the URL right and CORS on?</p>';
+        }
+      }
+
+      async function loadReviews(id, box) {
+        box.hidden = false;
+        box.innerHTML = '<p class="muted">Loading reviews…</p>';
+        try {
+          const res = await fetch(API + "/products/" + id + "/reviews");
+          const data = await res.json();
+          if (!data.reviews.length) {
+            box.innerHTML = '<p class="muted">No reviews yet.</p>';
+            return;
+          }
+          box.innerHTML = data.reviews
+            .map(
+              (r) =>
+                '<p class="review"><span class="stars">' +
+                starRow(r.stars) +
+                "</span> — " +
+                escapeHtml(r.user) +
+                ": " +
+                escapeHtml(r.text) +
+                "</p>"
+            )
+            .join("");
+        } catch (e) {
+          box.innerHTML = '<p class="err">Could not load reviews.</p>';
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
+
+      loadProducts();
+    </script>
+  </body>
+</html>
