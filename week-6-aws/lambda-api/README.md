@@ -5,9 +5,9 @@ list products, get one product, place an order — behind an HTTP API Gateway.
 
 ```
 lambda-api/
-├── handler.js      the function (four routes, one handler)
+├── handler.py      the function (four routes, one handler)
 ├── template.yaml   AWS SAM — defines the function, the API, and the routes
-└── package.json    metadata (the app has no dependencies)
+└── requirements.txt  Python deps (none — it uses only the standard library)
 ```
 
 ---
@@ -65,9 +65,9 @@ sam delete
 
 ## Option B — the console (no tools, good for a first look)
 
-1. **Lambda → Create function** → Author from scratch → runtime **Node.js 20** →
+1. **Lambda → Create function** → Author from scratch → runtime **Python 3.12** →
    Create.
-2. Paste the contents of `handler.js` into the code editor → **Deploy**.
+2. Paste the contents of `handler.py` into the code editor → **Deploy**.
 3. **Add trigger → API Gateway → Create an HTTP API** → open (or leave it and add
    routes next).
 4. In **API Gateway → your API → Routes**, add the four routes, each pointing at
@@ -100,7 +100,7 @@ sam delete
 
 ## Break it on purpose
 
-Add `throw new Error('boom')` at the top of the `GET /products` branch,
+Add `raise Exception("boom")` at the top of the `GET /products` branch,
 redeploy (`sam build && sam deploy`), hit `/products`, and watch it return a
-502 — then open the logs with `sam logs --tail` and find the stack trace. That
-is the whole debugging loop for a Lambda: the logs are where the "why" lives.
+502 — then open the logs with `sam logs --tail` and find the traceback. That is
+the whole debugging loop for a Lambda: the logs are where the "why" lives.

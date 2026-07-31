@@ -1,7 +1,0 @@
-{
-  "name": "store-api-lambda",
-  "version": "1.0.0",
-  "description": "Session 18 lab — a four-route store API on Lambda + API Gateway",
-  "main": "handler.js",
-  "license": "MIT"
-}

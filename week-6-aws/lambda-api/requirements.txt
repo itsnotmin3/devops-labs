@@ -1,0 +1,1 @@
+# No third-party dependencies — the handler uses only the standard library.
