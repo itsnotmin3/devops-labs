@@ -67,7 +67,10 @@ sam delete
 
 1. **Lambda → Create function** → Author from scratch → runtime **Python 3.12** →
    Create.
-2. Paste the contents of `handler.py` into the code editor → **Deploy**.
+2. Paste the contents of `handler.py` into the code editor → **Deploy**. Our
+   function is named `lambda_handler`, which is the console's default, so the
+   **Handler** setting (`lambda_function.lambda_handler`) already matches. Name
+   the file or function differently and you must update Handler to `file.function`.
 3. **Add trigger → API Gateway → Create an HTTP API** → open (or leave it and add
    routes next).
 4. In **API Gateway → your API → Routes**, add the four routes, each pointing at
