@@ -1,0 +1,60 @@
+# 09 — Test on the GitHub runner, then BUILD & RUN on your own server over SSH.
+#      No registry. The runner tests; the server builds the image and runs it.
+#
+# Use this with the demo-app in ../demo-app (it has the Dockerfile + test).
+#
+# Required repo secrets (Settings > Secrets and variables > Actions):
+#   SSH_HOST  your server IP        (e.g. 54.23.10.45)
+#   SSH_USER  ubuntu
+#   SSH_KEY   the CONTENTS of your private key
+#
+# The server needs: git + Docker installed, and SSH access with that key.
+name: 09 Build & deploy on the server (SSH)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # 1) The GitHub runner tests. Nothing deploys unless this passes.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm test --if-present
+
+  # 2) SSH into the server; the SERVER pulls the code and builds + runs the image.
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build & run on the server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            # get the exact code that was just tested onto the server
+            if [ ! -d ~/app/.git ]; then
+              git clone https://github.com/${{ github.repository }}.git ~/app
+            fi
+            cd ~/app
+            git fetch origin main
+            git reset --hard origin/main
+
+            # BUILD the image on the server (no registry involved)
+            docker build -t demo-app .
+
+            # replace the running container with the new one
+            docker rm -f demo-app 2>/dev/null || true
+            docker run -d --name demo-app -p 80:3000 --restart unless-stopped demo-app
+
+            docker image prune -f
+            echo "deployed $(git rev-parse --short HEAD)"

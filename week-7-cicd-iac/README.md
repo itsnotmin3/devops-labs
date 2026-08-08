@@ -56,7 +56,8 @@ repo at `.github/workflows/` and watch it run in the **Actions** tab.
 | 05 | `05-matrix.yml` | One job, many versions — test on Node 18/20/22 at once |
 | 06 | `06-secrets-env.yml` | `env:` for config, `secrets:` for credentials |
 | 07 | `07-docker-build-push.yml` | Build your Week 4 image, push to ghcr.io |
-| 08 | `08-full-pipeline.yml` | test → build → deploy over SSH. The real thing. |
+| 08 | `08-full-pipeline.yml` | test → build image → push to registry → SSH pull & run. |
+| 09 | `09-ssh-build-deploy.yml` | test on the runner → SSH to your server, which **builds and runs** the image itself. No registry. |
 
 ## The mental model
 ```
