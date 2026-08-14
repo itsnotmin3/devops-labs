@@ -6,11 +6,9 @@
 #   SSH_USER  ubuntu
 #   SSH_KEY   the CONTENTS of your private .pem key
 name: 08 Full pipeline
-
 on:
   push:
     branches: [main]
-
 jobs:
   # 1) gate: nothing ships unless tests pass
   test:
@@ -33,16 +31,24 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      # ghcr.io rejects uppercase; GITHUB_REPOSITORY keeps the owner's casing
+      - name: Compute lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
 
   # 3) log in to GHCR on the server, pull the new image, and restart
   deploy:
@@ -52,10 +58,13 @@ jobs:
       contents: read
       packages: read              # GITHUB_TOKEN needs read to pull the image
     steps:
+      - name: Compute lowercase image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         env:
-          IMAGE: ghcr.io/${{ github.repository }}:latest
+          IMAGE: ${{ env.IMAGE }}
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # auto-provided; no PAT needed
         with:
@@ -65,11 +74,11 @@ jobs:
           # forward these env vars into the remote script (or they won't exist there)
           envs: IMAGE,GHCR_USER,GHCR_TOKEN
           script: |
+            set -euo pipefail
             # GHCR packages are private by default — log in before pulling.
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker pull "$IMAGE"
-            docker stop app || true
-            docker rm app || true
+            docker rm -f app || true
             docker run -d --name app -p 3000:3000 --restart unless-stopped "$IMAGE"
             docker logout ghcr.io
             docker image prune -f
