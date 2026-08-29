@@ -1,28 +1,28 @@
-# Terraform — Session 22
+# Terraform — Session 23
 
-Session 21 made the argument: declarative, idempotent, desired state,
-reconciliation, state, drift. You agreed with all of it in the abstract.
+Session 22 made the argument for Infrastructure as Code — declarative, desired
+state, idempotency, drift. Here you type it.
 
-Here you type it.
-
-By the end, the environment you clicked together in Week 6 exists as a few
-hundred lines of text in git — and you can destroy the whole thing and rebuild
-it, correctly, in a different region, in under three minutes, with one command.
+Do the **core labs in order** — that is the whole session. The **optional** labs
+go deeper and are there for when a real project needs them; you do not need them
+to be productive.
 
 ```
 terraform/
-├── 01-first-bucket/       the smallest config that really works
-├── 02-variables-outputs/  variables, locals, outputs, tfvars
-├── 03-data-sources/       a real server, nothing hard-coded
-├── 04-full-environment/   VPC + subnet + IGW + RT + SG + EC2 + S3
-├── 05-modules/            one definition, two environments
-├── 06-remote-backend/     S3 state with locking
-└── 07-terraform-in-ci/    plan on the PR, apply on merge
+│  ── core (do these) ──
+├── 01-first-bucket/        deploy an S3 bucket + the init/plan/apply/destroy loop
+├── 02-variables-outputs/   variables and outputs
+├── 03-deploy-ec2/          deploy an EC2 instance (same pattern, now compute)
+├── 07-terraform-in-ci/     plan on the PR, apply on merge — the automated capstone
+│
+│  ── optional / going further ──
+├── 04-full-environment/    a full VPC + subnet + gateway + SG + EC2 + S3
+├── 05-modules/             package infrastructure into reusable modules
+└── 06-remote-backend/      move state to a shared S3 backend with locking
 ```
 
-Work through them **in order**. Each is the previous one plus one idea — the
-same method as the Compose labs in Week 5 and the GitHub Actions labs next
-door.
+The four core labs mirror the session step for step: deploy a bucket, add
+variables and outputs, deploy a server, then wire Terraform into CI/CD.
 
 ---
 

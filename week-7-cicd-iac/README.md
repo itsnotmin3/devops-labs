@@ -147,15 +147,22 @@ terraform destroy    # ALWAYS
 
 **→ Full instructions: [`terraform/README.md`](terraform/README.md)**
 
+**Core (do these):**
+
 | # | Teaches |
 |---|---------|
-| 01 | providers, resources, the init/plan/apply/destroy loop, state |
-| 02 | variables, locals, outputs, tfvars, one config → two environments |
-| 03 | data sources (never hard-code an AMI), implicit dependencies |
-| 04 | the full VPC + subnet + IGW + SG + EC2 + S3, in 90 seconds |
+| 01 | deploy an S3 bucket + the init/plan/apply/destroy loop |
+| 02 | variables and outputs |
+| 03 | deploy an EC2 instance (same pattern, now compute) |
+| 07 | plan on the PR, apply on merge — Terraform in CI/CD |
+
+**Optional / going further:**
+
+| # | Teaches |
+|---|---------|
+| 04 | a full VPC + subnet + IGW + SG + EC2 + S3 |
 | 05 | modules — one definition, separate state per environment |
-| 06 | S3 remote backend with locking, and why local state is a bus factor of 1 |
-| 07 | plan on the PR, apply on merge, with OIDC instead of stored keys |
+| 06 | S3 remote backend with locking |
 
 ⚠️ **`terraform destroy` at the end of every sitting.** A forgotten EC2 is
 ~$8/month; a forgotten NAT gateway is ~$32/month. Terraform makes it trivially
