@@ -16,7 +16,7 @@ credentials. **Sessions 18 through 22, in one file.**
 ```bash
 mkdir -p .github/workflows infra
 cp terraform-plan-apply.yml .github/workflows/terraform.yml
-cp ../04-full-environment/*.tf infra/
+cp ../03-deploy-ec2/*.tf infra/     # any Terraform config works — the EC2 one is simplest
 ```
 
 Then set up OIDC so GitHub can assume an AWS role without a stored key —

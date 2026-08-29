@@ -45,7 +45,8 @@ terraform apply -var-file=prod.tfvars      # versioning Enabled
 
 > ⚠️ **Both applies share ONE state file**, so the second REPLACES the first —
 > it is not two environments side by side, it is one environment being
-> reconfigured. That is exactly the problem `05-modules` and workspaces solve.
+> reconfigured. (Separate state per environment — via modules or workspaces —
+> is how real projects keep them apart; that is a "going further" topic.)
 > Notice the plan says `-/+ must be replaced`. Read it before you say yes.
 
 ## Variable precedence (highest wins)

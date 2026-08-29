@@ -132,9 +132,9 @@ a server that matters.
 
 # Terraform — infrastructure from code
 
-Seven progressive labs: the smallest working config → the entire Week 6
-environment as text → modules → remote state → a pipeline that plans on the
-pull request and applies on merge.
+Four focused labs: deploy an S3 bucket, add variables and outputs, deploy an
+EC2 instance, then wire Terraform into a CI/CD pipeline that plans on the pull
+request and applies on merge.
 
 ```bash
 cd terraform/01-first-bucket
@@ -147,22 +147,12 @@ terraform destroy    # ALWAYS
 
 **→ Full instructions: [`terraform/README.md`](terraform/README.md)**
 
-**Core (do these):**
-
 | # | Teaches |
 |---|---------|
 | 01 | deploy an S3 bucket + the init/plan/apply/destroy loop |
 | 02 | variables and outputs |
 | 03 | deploy an EC2 instance (same pattern, now compute) |
-| 07 | plan on the PR, apply on merge — Terraform in CI/CD |
-
-**Optional / going further:**
-
-| # | Teaches |
-|---|---------|
-| 04 | a full VPC + subnet + IGW + SG + EC2 + S3 |
-| 05 | modules — one definition, separate state per environment |
-| 06 | S3 remote backend with locking |
+| 04 | plan on the PR, apply on merge — Terraform in CI/CD |
 
 ⚠️ **`terraform destroy` at the end of every sitting.** A forgotten EC2 is
 ~$8/month; a forgotten NAT gateway is ~$32/month. Terraform makes it trivially

@@ -3,26 +3,18 @@
 Session 22 made the argument for Infrastructure as Code — declarative, desired
 state, idempotency, drift. Here you type it.
 
-Do the **core labs in order** — that is the whole session. The **optional** labs
-go deeper and are there for when a real project needs them; you do not need them
-to be productive.
+Four labs, done in order — that is the whole session.
 
 ```
 terraform/
-│  ── core (do these) ──
 ├── 01-first-bucket/        deploy an S3 bucket + the init/plan/apply/destroy loop
 ├── 02-variables-outputs/   variables and outputs
 ├── 03-deploy-ec2/          deploy an EC2 instance (same pattern, now compute)
-├── 07-terraform-in-ci/     plan on the PR, apply on merge — the automated capstone
-│
-│  ── optional / going further ──
-├── 04-full-environment/    a full VPC + subnet + gateway + SG + EC2 + S3
-├── 05-modules/             package infrastructure into reusable modules
-└── 06-remote-backend/      move state to a shared S3 backend with locking
+└── 04-terraform-in-ci/     plan on the PR, apply on merge — Terraform in CI/CD
 ```
 
-The four core labs mirror the session step for step: deploy a bucket, add
-variables and outputs, deploy a server, then wire Terraform into CI/CD.
+They mirror the session step for step: deploy a bucket, add variables and
+outputs, deploy a server, then wire Terraform into CI/CD.
 
 ---
 

@@ -1,8 +1,0 @@
-# cp terraform.tfvars.example terraform.tfvars
-environment = "dev"
-suffix      = "4471"          # <- your own digits
-region      = "ap-south-1"
-
-# Optional — leave both out and the SSH rule is never created at all.
-# key_name         = "my-key"
-# allowed_ssh_cidr = ["1.2.3.4/32"]   # curl ifconfig.me
