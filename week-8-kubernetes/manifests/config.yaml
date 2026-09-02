@@ -1,0 +1,17 @@
+# Config lives OUTSIDE the image: plain values in a ConfigMap, sensitive ones in
+# a Secret. Both get injected into the Pod as environment variables.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config
+data:
+  APP_ENV: production
+  FEATURE_FLAG: "true"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: web-secret
+type: Opaque
+stringData:
+  API_KEY: super-secret-value # base64-encoded, NOT encrypted — never commit a real one

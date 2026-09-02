@@ -1,0 +1,19 @@
+# An Ingress routes hostnames/paths to a Service and terminates TLS.
+# It needs an Ingress controller to enforce it — K3s ships Traefik built in,
+# so this works out of the box.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+spec:
+  rules:
+    - host: app.example.com # requests for this host...
+      http:
+        paths:
+          - path: / # ...on this path...
+            pathType: Prefix
+            backend:
+              service:
+                name: web # ...go to the web Service
+                port:
+                  number: 80

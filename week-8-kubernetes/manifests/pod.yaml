@@ -1,0 +1,12 @@
+# The smallest unit — one container in a Pod. Step 1 of the session.
+# You rarely create bare Pods (they do not heal); this is just to see one.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+spec:
+  containers:
+    - name: web
+      image: nginx
+      ports:
+        - containerPort: 80
