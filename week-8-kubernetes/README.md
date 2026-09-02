@@ -1,8 +1,8 @@
 # Week 8 — Kubernetes lab (K3s)
 
 The hands-on half of Session 25. Run a real one-node Kubernetes cluster with
-**K3s**, then work through each object — Pod, Deployment, Service, Ingress,
-ConfigMap/Secret — the same YAML you saw in the session, applied with `kubectl`.
+**K3s**, then work through each object — Pod, Deployment, Service, Ingress —
+the same YAML you saw in the session, applied with `kubectl`.
 
 Do this on an Ubuntu VM or cloud VPS (needs ~1 GB RAM).
 
@@ -12,8 +12,7 @@ week-8-kubernetes/
 │   ├── pod.yaml          the smallest unit
 │   ├── deployment.yaml   3 replicas — what you actually run
 │   ├── service.yaml      a stable address (NodePort)
-│   ├── ingress.yaml      hostname/path routing (Traefik, built into K3s)
-│   └── config.yaml       a ConfigMap + a Secret
+│   └── ingress.yaml      hostname/path routing (Traefik, built into K3s)
 └── README.md
 ```
 
@@ -88,27 +87,7 @@ kubectl get ingress
 curl -H "Host: app.example.com" http://localhost/    # Traefik routes it to the web Service
 ```
 
-## Step 5 — config outside the image
-
-```bash
-kubectl apply -f manifests/config.yaml       # a ConfigMap + a Secret
-```
-Add them to the Deployment's container as environment variables — put this
-under the container in `manifests/deployment.yaml`:
-```yaml
-          envFrom:
-            - configMapRef: { name: web-config }
-            - secretRef: { name: web-secret }
-```
-Re-apply and check they landed inside a Pod:
-```bash
-kubectl apply -f manifests/deployment.yaml
-kubectl exec deploy/web -- printenv | grep -E "APP_ENV|API_KEY"
-# APP_ENV=production
-# API_KEY=super-secret-value
-```
-
-## Step 6 — roll out an update, and undo it
+## Step 5 — roll out an update, and undo it
 
 ```bash
 kubectl set image deployment/web web=nginx:1.27   # new version
