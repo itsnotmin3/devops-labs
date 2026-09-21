@@ -6,6 +6,7 @@ kind: Ingress
 metadata:
   name: web
 spec:
+  ingressClassName: traefik # which controller handles this (K3s = Traefik)
   rules:
     - host: app.example.com # requests for this host...
       http:

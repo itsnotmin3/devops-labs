@@ -12,7 +12,8 @@ week-8-kubernetes/
 │   ├── pod.yaml          the smallest unit
 │   ├── deployment.yaml   3 replicas — what you actually run
 │   ├── service.yaml      a stable address (NodePort)
-│   └── ingress.yaml      hostname/path routing (Traefik, built into K3s)
+│   ├── ingress.yaml      hostname/path routing over HTTP (Traefik)
+│   └── ingress-tls.yaml  the same Ingress + HTTPS (TLS)
 └── README.md
 ```
 
@@ -78,14 +79,51 @@ curl localhost:3xxxx                          # or http://SERVER_IP:3xxxx in a b
 Pods get new IPs every time they are replaced; the Service is the one address
 that never changes, load-balancing across all the healthy Pods.
 
-## Step 4 — an Ingress (hostname/path routing)
+## Step 4 — an Ingress over HTTP (no SSL yet)
 
 K3s ships the **Traefik** ingress controller, so Ingress works out of the box.
+Get plain HTTP working first — TLS is a small add-on in Step 4b.
 ```bash
 kubectl apply -f manifests/ingress.yaml
 kubectl get ingress
 curl -H "Host: app.example.com" http://localhost/    # Traefik routes it to the web Service
 ```
+
+## Step 4b — the same Ingress, now with HTTPS (TLS)
+
+Serving HTTPS does not rewrite the Ingress — you add one `tls:` block that
+points at a Secret holding a certificate. `ingress-tls.yaml` is `ingress.yaml`
+plus that block, reusing the name `web` so it upgrades the HTTP Ingress in place.
+
+For a self-contained demo (no real domain needed), make a **self-signed**
+certificate and store it in a Secret called `web-tls`:
+```bash
+# 1. generate a self-signed cert + key for app.example.com
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout tls.key -out tls.crt \
+  -subj "/CN=app.example.com" \
+  -addext "subjectAltName=DNS:app.example.com"
+
+# 2. store them in a TLS Secret (type kubernetes.io/tls)
+kubectl create secret tls web-tls --cert=tls.crt --key=tls.key
+
+# 3. apply the TLS Ingress (same object name → upgrades the HTTP one)
+kubectl apply -f manifests/ingress-tls.yaml
+```
+
+Test it. `--resolve` makes curl send the right TLS name (SNI) so Traefik serves
+the app.example.com cert; `-k` accepts the self-signed one:
+```bash
+curl -k --resolve app.example.com:443:127.0.0.1 https://app.example.com/
+```
+You get the Nginx page over HTTPS. A browser will warn "not trusted" because the
+cert is self-signed — that is expected for a local demo.
+
+> **Real, auto-renewing certificates.** For a public domain you do not make certs
+> by hand. Either install **cert-manager** (it requests Let's Encrypt certs and
+> writes them into `web-tls` for you), or use **Traefik's built-in ACME resolver**
+> on K3s. Both need the domain's DNS pointing at the node and ports 80/443 open;
+> the Ingress YAML barely changes. The course site (Session 25) has the full code.
 
 ## Step 5 — roll out an update, and undo it
 
@@ -106,8 +144,9 @@ kubectl get all
 ## Cleanup
 
 ```bash
-kubectl delete -f manifests/                 # remove everything you applied
-/usr/local/bin/k3s-uninstall.sh              # remove K3s entirely
+kubectl delete -f manifests/ --ignore-not-found   # remove everything you applied
+kubectl delete secret web-tls --ignore-not-found  # the TLS cert Secret
+/usr/local/bin/k3s-uninstall.sh                   # remove K3s entirely
 ```
 
 > Every command here runs identically on managed Kubernetes (EKS, GKE, AKS) —

@@ -1,0 +1,25 @@
+# The SAME Ingress as ingress.yaml, plus a `tls:` block for HTTPS.
+# It reuses the object name `web`, so `kubectl apply` upgrades the HTTP
+# Ingress in place. It points at a Secret called `web-tls` that holds the
+# certificate + key — create that Secret first (see the README, Step 4b).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+spec:
+  ingressClassName: traefik
+  tls: # <-- the only new block vs ingress.yaml
+    - hosts:
+        - app.example.com
+      secretName: web-tls # the Secret holding the cert + key
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
